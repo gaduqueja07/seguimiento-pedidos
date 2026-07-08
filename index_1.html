@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seguimiento de tu pedido | Kaba & D'Luchi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #B5495B;
+    --primary-dark: #8F3548;
+    --primary-tint: #F3DADE;
+    --hero-bg: #FBF0EC;
+    --bg: #FAF6F1;
+    --ink: #2B2230;
+    --ink-soft: #8A7B85;
+    --line: #EDE7E9;
+    --blanco: #FFFFFF;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    background: var(--hero-bg);
+    padding: 34px 20px 28px;
+    text-align: center;
+    border-bottom: 1px solid var(--line);
+  }
+  header .marca {
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--primary-dark);
+  }
+  header h1 {
+    font-size: 1.55rem;
+    font-weight: 700;
+    margin-top: 8px;
+    color: var(--ink);
+  }
+  header p { font-size: .88rem; color: var(--ink-soft); margin-top: 6px; }
+
+  main {
+    flex: 1;
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+  }
+  .buscador {
+    background: var(--blanco);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 22px;
+  }
+  .buscador label {
+    display: block;
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+  .fila { display: flex; gap: 10px; }
+  input[type="tel"] {
+    flex: 1;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 13px 15px;
+    font-size: 1.05rem;
+    font-family: inherit;
+    outline: none;
+    min-width: 0;
+    background: var(--bg);
+  }
+  input[type="tel"]:focus { border-color: var(--primary); background: var(--blanco); }
+  button.principal {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 13px 22px;
+    font-size: .95rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  button.principal:hover { background: var(--primary-dark); }
+  button.principal:disabled { opacity: .5; cursor: wait; }
+  .nota {
+    font-size: .73rem;
+    color: var(--ink-soft);
+    margin-top: 14px;
+    line-height: 1.55;
+  }
+  #mensaje {
+    margin-top: 20px;
+    font-size: .92rem;
+    color: var(--ink-soft);
+    text-align: center;
+    display: none;
+    line-height: 1.6;
+  }
+  #resultados { margin-top: 20px; display: grid; gap: 16px; }
+
+  .pedido {
+    background: var(--blanco);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 22px 20px;
+  }
+  .pedido .encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .pedido .numero { font-weight: 700; font-size: 1.05rem; }
+  .pedido .fecha { font-size: .8rem; color: var(--ink-soft); }
+  .estado-pill {
+    font-size: .74rem;
+    font-weight: 600;
+    padding: 5px 13px;
+    border-radius: 999px;
+    background: var(--primary-tint);
+    color: var(--primary-dark);
+  }
+
+  /* Timeline de 4 pasos */
+  .timeline {
+    display: flex;
+    margin: 22px 0 6px;
+  }
+  .paso {
+    flex: 1;
+    text-align: center;
+    position: relative;
+  }
+  .paso .linea {
+    position: absolute;
+    top: 17px;
+    left: -50%;
+    width: 100%;
+    height: 3px;
+    background: var(--line);
+    z-index: 0;
+  }
+  .paso.hecho .linea { background: var(--primary); }
+  .paso:first-child .linea { display: none; }
+  .paso .circulo {
+    position: relative;
+    z-index: 1;
+    width: 36px;
+    height: 36px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: var(--line);
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .paso.hecho .circulo { background: var(--primary); color: #fff; }
+  .paso.actual .circulo { box-shadow: 0 0 0 5px var(--primary-tint); }
+  .paso .etiqueta {
+    margin-top: 8px;
+    font-size: .68rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    line-height: 1.3;
+  }
+  .paso.hecho .etiqueta { color: var(--ink); }
+
+  .guia-info {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--line);
+    font-size: .86rem;
+    color: var(--ink-soft);
+    line-height: 1.7;
+  }
+  .guia-info strong { color: var(--ink); font-weight: 600; }
+  .guia-acciones { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .guia-acciones a, .guia-acciones button {
+    flex: 1;
+    text-align: center;
+    text-decoration: none;
+    font-size: .85rem;
+    font-weight: 600;
+    font-family: inherit;
+    padding: 11px 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    border: 1.5px solid var(--primary);
+    min-width: 130px;
+    transition: opacity .15s;
+  }
+  .guia-acciones a { background: var(--primary); color: #fff; }
+  .guia-acciones a:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+  .guia-acciones button { background: var(--blanco); color: var(--primary); }
+  .guia-acciones button:hover { background: var(--primary-tint); }
+
+  .pista {
+    margin-top: 10px;
+    font-size: .72rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .actualizado {
+    text-align: center;
+    font-size: .74rem;
+    color: var(--ink-soft);
+    margin-top: 18px;
+    display: none;
+  }
+  footer {
+    text-align: center;
+    font-size: .74rem;
+    color: var(--ink-soft);
+    padding: 18px 16px 26px;
+    line-height: 1.6;
+    background: var(--hero-bg);
+    border-top: 1px solid var(--line);
+  }
+  @media (max-width: 420px) {
+    .paso .etiqueta { font-size: .6rem; }
+    .paso .circulo { width: 32px; height: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="marca">Kaba &amp; D'Luchi</div>
+  <h1>Seguimiento de tu pedido</h1>
+  <p>Consulta el estado con tu número de documento</p>
+</header>
+
+<main>
+  <div class="buscador">
+    <label for="cedula">Número de cédula o NIT (sin puntos)</label>
+    <div class="fila">
+      <input type="tel" id="cedula" inputmode="numeric" placeholder="Ej: 1017234567" maxlength="12" autocomplete="off">
+      <button class="principal" id="btnConsultar" onclick="consultar()">Consultar</button>
+    </div>
+    <p class="nota">
+      Al consultar aceptas el tratamiento de tus datos personales conforme a
+      nuestra política de privacidad (Ley 1581 de 2012). Solo se muestra
+      información asociada al documento ingresado.
+    </p>
+  </div>
+
+  <p id="mensaje"></p>
+  <div id="resultados"></div>
+  <p class="actualizado" id="actualizado"></p>
+</main>
+
+<footer>
+  ¿Necesitas ayuda con tu pedido? Escríbenos por WhatsApp a nuestra línea de
+  servicio al cliente y con gusto te acompañamos.
+</footer>
+
+<script>
+  // ===================== CONFIGURACIÓN =====================
+  const WORKER_URL = "https://consulta-dluchi.direccionlogistica.workers.dev/consulta";
+  const URL_RASTREO = "https://coordinadora.com/rastreo/rastreo-de-guia/";
+
+  // Estados reales del WMS de D'Luchi (6):
+  //   Pendiente | Ruteado (picking) | Preparado (alistado) | Empacado (con guía)
+  //   Cancelado y Devolución: casos especiales, se muestran sin timeline.
+  const ESTADOS_ESPECIALES = [
+    { contiene: ["cancelado", "anulado"], mensaje: "Este pedido fue cancelado. Si tienes dudas o no reconoces esta cancelación, escríbenos por WhatsApp." },
+    { contiene: ["devoluci"], mensaje: "Este pedido registra una devolución. Escríbenos por WhatsApp y con gusto te contamos el detalle y las opciones." },
+  ];
+  const MAPA_ESTADOS = [
+    { paso: 4, contiene: ["entregado"] },
+    { paso: 3, contiene: ["empacado", "despachado", "facturado", "enviado"] },
+    { paso: 2, contiene: ["ruteado", "preparado", "alistamiento", "picking", "preparaci", "proceso"] },
+    { paso: 1, contiene: ["pendiente", "creado", "cargado", "confirmado"] },
+  ];
+  const PASOS = [
+    { etiqueta: "Pedido recibido", icono: "check" },
+    { etiqueta: "En preparación", icono: "box" },
+    { etiqueta: "Empacado con guía", icono: "truck" },
+    { etiqueta: "Entregado", icono: "home" },
+  ];
+  // =========================================================
+
+  const ICONOS = {
+    check: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    box: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 3L21 7.5V16.5L12 21L3 16.5V7.5L12 3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M3 7.5L12 12L21 7.5M12 12V21" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+    truck: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M2 6H14V16H2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14 10H18L21 13V16H14V10Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="6.5" cy="18" r="1.8" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="18" r="1.8" stroke="currentColor" stroke-width="2"/></svg>',
+    home: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 11L12 4L20 11V20H4V11Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9.5 20V14H14.5V20" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+  };
+
+  const $ = (id) => document.getElementById(id);
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") consultar();
+  });
+
+  function pasoDeEstado(estado, tieneGuia) {
+    const e = (estado || "").toLowerCase();
+    for (const regla of MAPA_ESTADOS) {
+      if (regla.contiene.some((c) => e.includes(c))) return regla.paso;
+    }
+    return tieneGuia ? 3 : 2; // respaldo razonable
+  }
+
+  async function consultar() {
+    const cedula = $("cedula").value.replace(/\D/g, "");
+    const btn = $("btnConsultar");
+    $("resultados").innerHTML = "";
+    $("actualizado").style.display = "none";
+
+    if (cedula.length < 5) {
+      mostrarMensaje("Ingresa un número de documento válido.");
+      return;
+    }
+
+    btn.disabled = true;
+    mostrarMensaje("Consultando tu pedido...");
+
+    try {
+      const resp = await fetch(WORKER_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cedula }),
+      });
+      const datos = await resp.json();
+
+      if (!resp.ok) {
+        mostrarMensaje(datos.error || "No pudimos consultar en este momento. Intenta de nuevo.");
+        return;
+      }
+      if (!datos.encontrado) {
+        mostrarMensaje("No encontramos pedidos recientes asociados a este documento.<br>Si crees que es un error, escríbenos por WhatsApp.");
+        return;
+      }
+
+      $("mensaje").style.display = "none";
+      pintarResultados(datos.pedidos);
+
+      if (datos.actualizado) {
+        $("actualizado").textContent = "Información actualizada: " + datos.actualizado;
+        $("actualizado").style.display = "block";
+      }
+    } catch (e) {
+      mostrarMensaje("Error de conexión. Verifica tu internet e intenta de nuevo.");
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function mostrarMensaje(html) {
+    const msg = $("mensaje");
+    msg.innerHTML = html;
+    msg.style.display = "block";
+  }
+
+  function estadoEspecial(estado) {
+    const e = (estado || "").toLowerCase();
+    for (const regla of ESTADOS_ESPECIALES) {
+      if (regla.contiene.some((c) => e.includes(c))) return regla.mensaje;
+    }
+    return null;
+  }
+
+  function pintarResultados(pedidos) {
+    $("resultados").innerHTML = pedidos.map((p) => {
+      const especial = estadoEspecial(p.estado);
+      if (especial) {
+        return `
+        <div class="pedido">
+          <div class="encabezado">
+            <div>
+              <div class="numero">Pedido ${escapar(p.pedido)}</div>
+              <div class="fecha">${escapar(p.fecha)}</div>
+            </div>
+            <span class="estado-pill" style="background:#EDE7E9;color:#8A7B85;">${escapar(p.estado)}</span>
+          </div>
+          <div class="guia-info">${especial}</div>
+        </div>`;
+      }
+
+      const tieneGuia = p.guia && p.guia.length >= 5;
+      const pasoActual = pasoDeEstado(p.estado, tieneGuia);
+
+      const timeline = PASOS.map((paso, i) => {
+        const n = i + 1;
+        const clases = ["paso", n <= pasoActual ? "hecho" : "", n === pasoActual ? "actual" : ""].join(" ");
+        return `
+          <div class="${clases}">
+            <div class="linea"></div>
+            <div class="circulo">${ICONOS[paso.icono]}</div>
+            <div class="etiqueta">${paso.etiqueta}</div>
+          </div>`;
+      }).join("");
+
+      return `
+        <div class="pedido">
+          <div class="encabezado">
+            <div>
+              <div class="numero">Pedido ${escapar(p.pedido)}</div>
+              <div class="fecha">${escapar(p.fecha)}</div>
+            </div>
+            <span class="estado-pill">${escapar(p.estado || "En gestión")}</span>
+          </div>
+          <div class="timeline">${timeline}</div>
+          <div class="guia-info">
+            ${tieneGuia
+              ? `<strong>Guía ${escapar(p.transportadora)}:</strong> ${escapar(p.guia)}<br>Tu pedido ya tiene guía de envío. Rástreala para ver el avance de la entrega.`
+              : `Tu pedido está en preparación; la guía de envío aparecerá aquí cuando esté empacado.`}
+          </div>
+          ${tieneGuia ? `
+          <div class="guia-acciones">
+            <a href="${URL_RASTREO}" target="_blank" rel="noopener" onclick="navigator.clipboard.writeText('${escapar(p.guia)}')">Rastrear guía</a>
+            <button onclick="copiarGuia('${escapar(p.guia)}', this)">Copiar guía</button>
+          </div>
+          <p class="pista">Al tocar "Rastrear guía" el número se copia automáticamente: pégalo en la página de Coordinadora.</p>` : ""}
+        </div>`;
+    }).join("");
+  }
+
+  function copiarGuia(guia, boton) {
+    navigator.clipboard.writeText(guia).then(() => {
+      const original = boton.textContent;
+      boton.textContent = "¡Copiada!";
+      setTimeout(() => (boton.textContent = original), 1500);
+    });
+  }
+
+  function escapar(texto) {
+    const div = document.createElement("div");
+    div.textContent = texto == null ? "" : String(texto);
+    return div.innerHTML;
+  }
+</script>
+</body>
+</html>
